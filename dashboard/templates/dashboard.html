@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blox Fruits Dashboard</title>
+</head>
+<body>
+    <h1>Active Servers</h1>
+    <table border="1">
+        <tr>
+            <th>Server ID</th>
+            <th>Players</th>
+            <th>Max Players</th>
+        </tr>
+        {% for server in servers %}
+        <tr>
+            <td>{{ server.id }}</td>
+            <td>{{ server.playing }}</td>
+            <td>{{ server.maxPlayers }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
