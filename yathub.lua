@@ -1,143 +1,169 @@
--- Main Configuration
-local config = {
+-- Blox Fruits Script with Enhanced Features
+-- Disclaimer: Use at your own risk! This script is for educational purposes only.
+
+-- Dependencies
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/minhhau207/SilverHub/main/obfuscated-3788.lua"))()
+
+-- GUI Setup
+local main = library.xova()
+
+local tabMain = main.create("Main")
+local tabVisual = main.create("Visual")
+local tabFarm = main.create("Farm")
+local tabTeleport = main.create("Teleport")
+local tabAdmin = main.create("Admin")
+
+-- Global Settings
+_G.Settings = {
     AutoFarm = false,
-    AutoCollectFruits = false,
-    AutoCollectChests = false,
-    AutoHop = false,
-    SelectedSea = "First Sea", -- Options: "First Sea", "Second Sea", "Third Sea"
-    WebhookURL = "", -- Optional: Set your webhook URL here
+    AutoCollectFruit = false,
+    RainFruit = false,
+    AutoFarmNearest = false,
+    AutoFarmQuest = false,
+    SelectedSea = "First Sea",
+    AdminOnlySkills = true
 }
 
--- GUI Library Setup
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local AutoFarmButton = Instance.new("TextButton")
-local AutoCollectFruitsButton = Instance.new("TextButton")
-local AutoCollectChestsButton = Instance.new("TextButton")
-local AutoHopButton = Instance.new("TextButton")
-local SeaSelector = Instance.new("TextLabel")
-
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
-
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-MainFrame.Size = UDim2.new(0, 300, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-MainFrame.BorderSizePixel = 0
-
-Title.Parent = MainFrame
-Title.Text = "Blox Fruits Script"
-Title.Size = UDim2.new(1, 0, 0.15, 0)
-Title.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextScaled = true
-
-local function createButton(parent, text, position)
-    local button = Instance.new("TextButton")
-    button.Parent = parent
-    button.Text = text
-    button.Size = UDim2.new(0.8, 0, 0.1, 0)
-    button.Position = position
-    button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.SourceSansBold
-    button.TextScaled = true
-    button.BorderSizePixel = 0
-    return button
+-- Helper Functions
+local function notify(message)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Blox Fruits Script",
+        Text = message,
+        Duration = 5
+    })
 end
 
-AutoFarmButton = createButton(MainFrame, "Toggle Auto Farm", UDim2.new(0.1, 0, 0.2, 0))
-AutoCollectFruitsButton = createButton(MainFrame, "Toggle Auto Collect Fruits", UDim2.new(0.1, 0, 0.35, 0))
-AutoCollectChestsButton = createButton(MainFrame, "Toggle Auto Collect Chests", UDim2.new(0.1, 0, 0.5, 0))
-AutoHopButton = createButton(MainFrame, "Toggle Auto Hop", UDim2.new(0.1, 0, 0.65, 0))
+local function teleportTo(position)
+    local player = game.Players.LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+    end
+end
 
-SeaSelector.Parent = MainFrame
-SeaSelector.Text = "Current Sea: " .. config.SelectedSea
-SeaSelector.Size = UDim2.new(0.8, 0, 0.1, 0)
-SeaSelector.Position = UDim2.new(0.1, 0, 0.8, 0)
-SeaSelector.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-SeaSelector.TextColor3 = Color3.fromRGB(255, 255, 255)
-SeaSelector.Font = Enum.Font.SourceSansBold
-SeaSelector.TextScaled = true
-
--- Farming Function
-local function autoFarm()
-    while config.AutoFarm do
-        local npc = game.Workspace:FindFirstChild("Bandit") -- Example NPC name
-        if npc and npc:FindFirstChild("HumanoidRootPart") then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame + Vector3.new(0, 10, 0)
+local function collectFruits()
+    for _, fruit in pairs(workspace:GetDescendants()) do
+        if fruit.Name:lower():find("fruit") and fruit:IsA("Model") then
+            teleportTo(fruit.PrimaryPart.Position)
             wait(0.5)
-            game:GetService("VirtualUser"):Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-            game:GetService("VirtualUser"):Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+            notify("Collected a fruit!")
         end
-        wait(1)
     end
 end
 
--- Collect Fruits Function
-local function autoCollectFruits()
-    while config.AutoCollectFruits do
-        for _, fruit in pairs(workspace:GetChildren()) do
-            if fruit:IsA("Model") and fruit.Name == "Fruit" then
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = fruit.PrimaryPart.CFrame
+-- Main Tab
+local mainPage = tabMain.xovapage(1)
+mainPage.Label({ Title = "Main Features" })
+
+mainPage.Toggle({
+    Title = "Auto Farm",
+    Default = _G.Settings.AutoFarm,
+    callback = function(state)
+        _G.Settings.AutoFarm = state
+        notify("Auto Farm " .. (state and "Enabled" or "Disabled"))
+    end
+})
+
+mainPage.Toggle({
+    Title = "Auto Collect Fruits",
+    Default = _G.Settings.AutoCollectFruit,
+    callback = function(state)
+        _G.Settings.AutoCollectFruit = state
+        notify("Auto Collect Fruits " .. (state and "Enabled" or "Disabled"))
+        if state then
+            collectFruits()
+        end
+    end
+})
+
+mainPage.Dropdown({
+    Title = "Select Sea",
+    Item = {"First Sea", "Second Sea", "Third Sea"},
+    callback = function(value)
+        _G.Settings.SelectedSea = value
+        notify("Switched to " .. value)
+    end
+})
+
+-- Visual Tab
+local visualPage = tabVisual.xovapage(1)
+visualPage.Label({ Title = "Visual Features" })
+
+visualPage.Toggle({
+    Title = "Rain Fruit",
+    Default = _G.Settings.RainFruit,
+    callback = function(state)
+        _G.Settings.RainFruit = state
+        notify("Rain Fruit " .. (state and "Enabled" or "Disabled"))
+        if state then
+            while _G.Settings.RainFruit do
+                local fruit = Instance.new("Part", workspace)
+                fruit.Size = Vector3.new(2, 2, 2)
+                fruit.BrickColor = BrickColor.new("Bright yellow")
+                fruit.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 50, 0)
+                fruit.Anchored = true
                 wait(0.5)
+                fruit:Destroy()
             end
         end
-        wait(5)
     end
-end
+})
 
--- Collect Chests Function
-local function autoCollectChests()
-    while config.AutoCollectChests do
-        for _, chest in pairs(workspace:GetChildren()) do
-            if chest:IsA("Model") and chest.Name == "Chest" then
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = chest.PrimaryPart.CFrame
-                wait(0.5)
-            end
-        end
-        wait(5)
+-- Farming Tab
+local farmPage = tabFarm.xovapage(1)
+farmPage.Label({ Title = "Farming Options" })
+
+farmPage.Toggle({
+    Title = "Auto Farm Nearest",
+    Default = _G.Settings.AutoFarmNearest,
+    callback = function(state)
+        _G.Settings.AutoFarmNearest = state
+        notify("Auto Farm Nearest " .. (state and "Enabled" or "Disabled"))
     end
-end
+})
 
--- Server Hop Function
-local function autoHop()
-    while config.AutoHop do
-        wait(60) -- Example interval for server hop
-        -- Add server hop logic here (e.g., teleport to another server)
+farmPage.Toggle({
+    Title = "Auto Farm with Quest",
+    Default = _G.Settings.AutoFarmQuest,
+    callback = function(state)
+        _G.Settings.AutoFarmQuest = state
+        notify("Auto Farm with Quest " .. (state and "Enabled" or "Disabled"))
     end
-end
+})
 
--- Button Callbacks
-AutoFarmButton.MouseButton1Click:Connect(function()
-    config.AutoFarm = not config.AutoFarm
-    if config.AutoFarm then
-        spawn(autoFarm)
+-- Admin Tab
+local adminPage = tabAdmin.xovapage(1)
+adminPage.Label({ Title = "Admin Skills" })
+
+adminPage.Toggle({
+    Title = "Enable Admin Skills",
+    Default = _G.Settings.AdminOnlySkills,
+    callback = function(state)
+        _G.Settings.AdminOnlySkills = state
+        notify("Admin Skills " .. (state and "Enabled" or "Disabled"))
     end
-end)
+})
 
-AutoCollectFruitsButton.MouseButton1Click:Connect(function()
-    config.AutoCollectFruits = not config.AutoCollectFruits
-    if config.AutoCollectFruits then
-        spawn(autoCollectFruits)
+adminPage.Button({
+    Title = "Teleport to Sky Island",
+    callback = function()
+        teleportTo(Vector3.new(0, 1000, 0))
+        notify("Teleported to Sky Island")
     end
-end)
+})
 
-AutoCollectChestsButton.MouseButton1Click:Connect(function()
-    config.AutoCollectChests = not config.AutoCollectChests
-    if config.AutoCollectChests then
-        spawn(autoCollectChests)
+adminPage.Button({
+    Title = "Summon Lightning Effect",
+    callback = function()
+        local lightning = Instance.new("Part", workspace)
+        lightning.Size = Vector3.new(1, 1, 1)
+        lightning.BrickColor = BrickColor.new("Bright blue")
+        lightning.Anchored = true
+        lightning.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
+        wait(0.2)
+        lightning:Destroy()
+        notify("Summoned Lightning")
     end
-end)
+})
 
-AutoHopButton.MouseButton1Click:Connect(function()
-    config.AutoHop = not config.AutoHop
-    if config.AutoHop then
-        spawn(autoHop)
-    end
-end)
-
-print("Blox Fruits GUI Loaded")
+-- Script Initialization
+notify("Blox Fruits Script Loaded!")
