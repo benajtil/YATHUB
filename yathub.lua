@@ -1,169 +1,154 @@
--- Blox Fruits Script with Enhanced Features
--- Disclaimer: Use at your own risk! This script is for educational purposes only.
+-- GUI Framework
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TitleBar = Instance.new("Frame")
+local CloseButton = Instance.new("TextButton")
+local ContentFrame = Instance.new("Frame")
 
--- Dependencies
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/minhhau207/SilverHub/main/obfuscated-3788.lua"))()
+ScreenGui.Name = "CustomGUI"
+ScreenGui.Parent = game.CoreGui
 
--- GUI Setup
-local main = library.xova()
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.Active = true
+MainFrame.Draggable = true
 
-local tabMain = main.create("Main")
-local tabVisual = main.create("Visual")
-local tabFarm = main.create("Farm")
-local tabTeleport = main.create("Teleport")
-local tabAdmin = main.create("Admin")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.Active = true
+TitleBar.Draggable = true
 
--- Global Settings
-_G.Settings = {
-    AutoFarm = false,
-    AutoCollectFruit = false,
-    RainFruit = false,
-    AutoFarmNearest = false,
-    AutoFarmQuest = false,
-    SelectedSea = "First Sea",
-    AdminOnlySkills = true
-}
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = TitleBar
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.Text = "X"
 
--- Helper Functions
-local function notify(message)
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Blox Fruits Script",
-        Text = message,
-        Duration = 5
-    })
-end
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 0.5
 
-local function teleportTo(position)
-    local player = game.Players.LocalPlayer
-    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-    end
-end
+-- Tabs
+local Tabs = {"Farm", "Visual", "Config", "Currency"}
+local TabButtons = {}
+local TabFrames = {}
 
-local function collectFruits()
-    for _, fruit in pairs(workspace:GetDescendants()) do
-        if fruit.Name:lower():find("fruit") and fruit:IsA("Model") then
-            teleportTo(fruit.PrimaryPart.Position)
-            wait(0.5)
-            notify("Collected a fruit!")
+for i, tabName in ipairs(Tabs) do
+    local TabButton = Instance.new("TextButton")
+    TabButton.Name = tabName .. "Button"
+    TabButton.Parent = TitleBar
+    TabButton.Text = tabName
+    TabButton.Size = UDim2.new(0, 60, 0, 30)
+    TabButton.Position = UDim2.new(0, (i - 1) * 60, 0, 0)
+    TabButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TabButtons[tabName] = TabButton
+
+    local TabFrame = Instance.new("Frame")
+    TabFrame.Name = tabName .. "Frame"
+    TabFrame.Parent = ContentFrame
+    TabFrame.Size = UDim2.new(1, 0, 1, 0)
+    TabFrame.BackgroundTransparency = 1
+    TabFrame.Visible = (i == 1)
+    TabFrames[tabName] = TabFrame
+
+    TabButton.MouseButton1Click:Connect(function()
+        for _, frame in pairs(TabFrames) do
+            frame.Visible = false
         end
-    end
+        TabFrame.Visible = true
+    end)
 end
 
--- Main Tab
-local mainPage = tabMain.xovapage(1)
-mainPage.Label({ Title = "Main Features" })
+-- Close GUI Functionality
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
 
-mainPage.Toggle({
-    Title = "Auto Farm",
-    Default = _G.Settings.AutoFarm,
-    callback = function(state)
-        _G.Settings.AutoFarm = state
-        notify("Auto Farm " .. (state and "Enabled" or "Disabled"))
-    end
-})
+-- Auto Buy Fruit
+local AutoBuyFruitButton = Instance.new("TextButton", TabFrames["Farm"])
+AutoBuyFruitButton.Text = "Auto Buy & Store Fruit"
+AutoBuyFruitButton.Size = UDim2.new(0, 200, 0, 30)
+AutoBuyFruitButton.Position = UDim2.new(0.5, -100, 0.4, -15)
+AutoBuyFruitButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+AutoBuyFruitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-mainPage.Toggle({
-    Title = "Auto Collect Fruits",
-    Default = _G.Settings.AutoCollectFruit,
-    callback = function(state)
-        _G.Settings.AutoCollectFruit = state
-        notify("Auto Collect Fruits " .. (state and "Enabled" or "Disabled"))
-        if state then
-            collectFruits()
-        end
-    end
-})
+local autoBuyFruitEnabled = false
 
-mainPage.Dropdown({
-    Title = "Select Sea",
-    Item = {"First Sea", "Second Sea", "Third Sea"},
-    callback = function(value)
-        _G.Settings.SelectedSea = value
-        notify("Switched to " .. value)
-    end
-})
+AutoBuyFruitButton.MouseButton1Click:Connect(function()
+    autoBuyFruitEnabled = not autoBuyFruitEnabled
+    AutoBuyFruitButton.Text = autoBuyFruitEnabled and "Auto Buy: ON" or "Auto Buy: OFF"
 
--- Visual Tab
-local visualPage = tabVisual.xovapage(1)
-visualPage.Label({ Title = "Visual Features" })
-
-visualPage.Toggle({
-    Title = "Rain Fruit",
-    Default = _G.Settings.RainFruit,
-    callback = function(state)
-        _G.Settings.RainFruit = state
-        notify("Rain Fruit " .. (state and "Enabled" or "Disabled"))
-        if state then
-            while _G.Settings.RainFruit do
-                local fruit = Instance.new("Part", workspace)
-                fruit.Size = Vector3.new(2, 2, 2)
-                fruit.BrickColor = BrickColor.new("Bright yellow")
-                fruit.Position = game.Players.LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 50, 0)
-                fruit.Anchored = true
-                wait(0.5)
-                fruit:Destroy()
+    if autoBuyFruitEnabled then
+        spawn(function()
+            while autoBuyFruitEnabled do
+                local fruitDealer = game.Workspace:FindFirstChild("Blox Fruit Dealer")
+                if fruitDealer then
+                    -- Buy the fruit
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("PurchaseFruit", "Random")
+                    
+                    -- Store the fruit
+                    local fruitName = game.Players.LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool")
+                    if fruitName then
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StoreFruit", fruitName.Name)
+                        print(fruitName.Name .. " has been stored!")
+                    end
+                else
+                    print("Fruit Dealer not found!")
+                end
+                wait(30) -- Check every 30 seconds
             end
-        end
+        end)
     end
-})
+end)
 
--- Farming Tab
-local farmPage = tabFarm.xovapage(1)
-farmPage.Label({ Title = "Farming Options" })
+-- Modify Bounty, Beli, and Fragments
+local CurrencyFrame = TabFrames["Currency"]
 
-farmPage.Toggle({
-    Title = "Auto Farm Nearest",
-    Default = _G.Settings.AutoFarmNearest,
-    callback = function(state)
-        _G.Settings.AutoFarmNearest = state
-        notify("Auto Farm Nearest " .. (state and "Enabled" or "Disabled"))
-    end
-})
+local BountyButton = Instance.new("TextButton", CurrencyFrame)
+BountyButton.Text = "Modify Bounty"
+BountyButton.Size = UDim2.new(0, 200, 0, 30)
+BountyButton.Position = UDim2.new(0.5, -100, 0.2, -15)
+BountyButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+BountyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-farmPage.Toggle({
-    Title = "Auto Farm with Quest",
-    Default = _G.Settings.AutoFarmQuest,
-    callback = function(state)
-        _G.Settings.AutoFarmQuest = state
-        notify("Auto Farm with Quest " .. (state and "Enabled" or "Disabled"))
-    end
-})
+BountyButton.MouseButton1Click:Connect(function()
+    local newBounty = 1000000 -- Modify to your desired bounty
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetBounty", newBounty)
+    print("Bounty set to:", newBounty)
+end)
 
--- Admin Tab
-local adminPage = tabAdmin.xovapage(1)
-adminPage.Label({ Title = "Admin Skills" })
+local BeliButton = Instance.new("TextButton", CurrencyFrame)
+BeliButton.Text = "Modify Beli"
+BeliButton.Size = UDim2.new(0, 200, 0, 30)
+BeliButton.Position = UDim2.new(0.5, -100, 0.4, -15)
+BeliButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+BeliButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-adminPage.Toggle({
-    Title = "Enable Admin Skills",
-    Default = _G.Settings.AdminOnlySkills,
-    callback = function(state)
-        _G.Settings.AdminOnlySkills = state
-        notify("Admin Skills " .. (state and "Enabled" or "Disabled"))
-    end
-})
+BeliButton.MouseButton1Click:Connect(function()
+    local newBeli = 10000000 -- Modify to your desired beli
+    game.Players.LocalPlayer.Data.Beli.Value = newBeli
+    print("Beli set to:", newBeli)
+end)
 
-adminPage.Button({
-    Title = "Teleport to Sky Island",
-    callback = function()
-        teleportTo(Vector3.new(0, 1000, 0))
-        notify("Teleported to Sky Island")
-    end
-})
+local FragmentsButton = Instance.new("TextButton", CurrencyFrame)
+FragmentsButton.Text = "Modify Fragments"
+FragmentsButton.Size = UDim2.new(0, 200, 0, 30)
+FragmentsButton.Position = UDim2.new(0.5, -100, 0.6, -15)
+FragmentsButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+FragmentsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-adminPage.Button({
-    Title = "Summon Lightning Effect",
-    callback = function()
-        local lightning = Instance.new("Part", workspace)
-        lightning.Size = Vector3.new(1, 1, 1)
-        lightning.BrickColor = BrickColor.new("Bright blue")
-        lightning.Anchored = true
-        lightning.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 10, 0)
-        wait(0.2)
-        lightning:Destroy()
-        notify("Summoned Lightning")
-    end
-})
-
--- Script Initialization
-notify("Blox Fruits Script Loaded!")
+FragmentsButton.MouseButton1Click:Connect(function()
+    local newFragments = 5000 -- Modify to your desired fragments
+    game.Players.LocalPlayer.Data.Fragments.Value = newFragments
+    print("Fragments set to:", newFragments)
+end)
